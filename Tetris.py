@@ -1,12 +1,14 @@
 import pygame, random
 from pygame.locals import *
 from sys import exit
+import Shapes
 
 grid_w = 10
 grid_h = 18
 
 grids = [[0] * grid_w for i in range(grid_h)]
 bricks = []
+shapes = [Shapes.ShapeI, Shapes.ShapeO]
 
 def init_bricks():
 	color_name = ["background", "red", "orange", "yellow", "green", "cyan", "blue", "purple"]
@@ -43,15 +45,38 @@ def main():
 	hello_text = font.render("Hello Tetris!", True, (200, 200, 0))
 	screen.blit(hello_text, (0, 0))
 
-	test_grids()
+	#test_grids()
 	show_grids(screen)
+	shape_now = shapes[0]()
+	shape_now.set_pos((0, grid_w / 2))
 
 	while True:
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				exit()
 
+			if event.type == KEYDOWN:
+				key_map = {K_LEFT: (0, -1), K_RIGHT: (0, 1), K_DOWN: (1, 0)}
+				if event.key in key_map:
+					shape_now.move(grids, key_map[event.key])
+
+				if event.key == K_UP:
+					shape_now.rotate(grids)
+
+		grids_old = [grids[i][:] for i in range(len(grids))]
+		shape_now.put_shape(grids)
+
+		if shape_now.stop:
+			next_shape = random.randrange(len(shapes))
+			shape_now = shapes[next_shape]()
+			shape_now.set_pos((0, grid_w / 2))
+
+		show_grids(screen)
+
 		pygame.display.update()
+
+		global grids
+		grids = grids_old
 
 if __name__ == '__main__':
 	main()
