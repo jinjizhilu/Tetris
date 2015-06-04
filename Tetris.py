@@ -5,6 +5,7 @@ import Shapes
 
 grid_w = 10
 grid_h = 18
+margin = (30, 30)
 
 grids = [[0] * grid_w for i in range(grid_h)]
 bricks = []
@@ -24,8 +25,10 @@ def test_grids():
 				grids[i][j] = random.randint(1, 7)
 	print grids
 
+def draw_frame(screen):
+	pygame.draw.rect(screen, (200, 200, 100), Rect(margin, (grid_w * 30, grid_h * 30)), 5)
+
 def show_grids(screen):
-	margin = (30, 30)
 	screen.fill((0, 0, 0))
 
 	for i in range(grid_h):
@@ -38,6 +41,7 @@ def main():
 	pygame.init()
 	screen = pygame.display.set_mode((640, 640), 0, 32)
 	pygame.display.set_caption("Tetris")
+	pygame.key.set_repeat(250, 75)
 
 	init_bricks()
 
@@ -48,7 +52,7 @@ def main():
 	#test_grids()
 	show_grids(screen)
 	shape_now = shapes[0]()
-	shape_now.set_pos((0, grid_w / 2))
+	shape_now.init_pos((0, grid_w / 2))
 
 	while True:
 		for event in pygame.event.get():
@@ -67,11 +71,14 @@ def main():
 		shape_now.put_shape(grids)
 
 		if shape_now.stop:
+			shape_now.eliminate_line(grids)
 			next_shape = random.randrange(len(shapes))
 			shape_now = shapes[next_shape]()
-			shape_now.set_pos((0, grid_w / 2))
+			shape_now.init_pos((0, grid_w / 2))
+			grids_old = grids
 
 		show_grids(screen)
+		draw_frame(screen)
 
 		pygame.display.update()
 
