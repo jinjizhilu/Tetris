@@ -9,7 +9,7 @@ margin = (30, 30)
 
 grids = [[0] * grid_w for i in range(grid_h)]
 bricks = []
-shapes = [Shapes.ShapeI, Shapes.ShapeO]
+shapes = Shapes.shapes
 
 def init_bricks():
 	color_name = ["background", "red", "orange", "yellow", "green", "cyan", "blue", "purple"]
@@ -37,11 +37,32 @@ def show_grids(screen):
 			brick = bricks[grids[i][j]]
 			screen.blit(brick, (margin[0] + 30 * j, margin[1] + 30 * i))
 
+def show_next_shape(screen, shape):
+	state = shape.states[shape.i_state]
+	pos = (390 + state.center[0] * 30, 60 + state.center[1] * 30)
+	brick = bricks[shape.brick]
+
+	for i in range(len(state.state)):
+		for j in range(len(state.state[0])):
+			if state.state[i][j] == 1:
+				y = i - state.center[0]
+				x = j - state.center[1]
+
+				screen.blit(brick, (pos[0] + x * 30, pos[1] + y * 30))
+
+def get_next_shape():
+	i_next_shape = random.randrange(len(shapes))
+	return shapes[i_next_shape]()
+
 def main():
 	pygame.init()
-	screen = pygame.display.set_mode((640, 640), 0, 32)
+	screen = pygame.display.set_mode((640, 600), 0, 32)
 	pygame.display.set_caption("Tetris")
 	pygame.key.set_repeat(250, 75)
+
+	clock = pygame.time.Clock()
+	n_tick = 0
+	speed = 30
 
 	init_bricks()
 
@@ -51,7 +72,8 @@ def main():
 
 	#test_grids()
 	show_grids(screen)
-	shape_now = shapes[0]()
+	shape_now = get_next_shape()
+	shape_next = get_next_shape()
 	shape_now.init_pos((0, grid_w / 2))
 
 	while True:
@@ -67,19 +89,27 @@ def main():
 				if event.key == K_UP:
 					shape_now.rotate(grids)
 
+		clock.tick(60)
+
+		n_tick += 1
+
+		if n_tick % speed == 0:
+			shape_now.move(grids, (1, 0))
+
 		grids_old = [grids[i][:] for i in range(len(grids))]
 		shape_now.put_shape(grids)
 
 		if shape_now.stop:
 			shape_now.eliminate_line(grids)
-			next_shape = random.randrange(len(shapes))
-			shape_now = shapes[next_shape]()
+			shape_now = shape_next
+			shape_next = get_next_shape()
 			shape_now.init_pos((0, grid_w / 2))
 			grids_old = grids
 
 		show_grids(screen)
+		show_next_shape(screen, shape_next)
 		draw_frame(screen)
-
+		
 		pygame.display.update()
 
 		global grids

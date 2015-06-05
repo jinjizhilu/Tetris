@@ -4,13 +4,14 @@ class State:
 		self.center = center
 
 class Shape:
-	def __init__(self, type, n_state, states, brick):
+	def __init__(self, type, states, brick):
 		self.type = type
-		self.n_state = n_state
 		self.states = states
+		self.n_state = len(states)
 		self.brick = brick
 		self.i_state = 0
 		self.stop = False
+		self.pos = self.states[self.i_state].center
 
 	def __add_tuple(self, tuple1, tuple2):
 		return (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1])
@@ -90,17 +91,54 @@ class ShapeI(Shape):
 	def __init__(self):
 		states = [State([[1], [1], [1], [1]], (1, 0)), \
 					State([[1, 1, 1, 1]], (0, 1))]
-		Shape.__init__(self, "I", 2, states, 1)
+		Shape.__init__(self, "I", states, 1)
 
 class ShapeO(Shape):
 	def __init__(self):
 		states = [State([[1, 1], [1, 1]], (0, 0))]
-		Shape.__init__(self, "O", 1, states, 2)
+		Shape.__init__(self, "O", states, 2)
+
+class ShapeL(Shape):
+	def __init__(self):
+		states = [State([[1, 0], [1, 0], [1, 1]], (1, 0)), \
+					State([[1, 1, 1], [1, 0, 0]], (0, 1)), \
+					State([[1, 1], [0, 1], [0, 1]], (1, 1)), \
+					State([[0, 0, 1], [1, 1, 1]], (1, 1))]
+		Shape.__init__(self, "L", states, 3)
+
+class ShapeJ(Shape):
+	def __init__(self):
+		states = [State([[0, 1], [0, 1], [1, 1]], (1, 1)), \
+					State([[1, 0, 0], [1, 1, 1]], (1, 1)), \
+					State([[1, 1], [1, 0], [1, 0]], (1, 0)), \
+					State([[1, 1, 1], [0, 0, 1]], (0, 1))]
+		Shape.__init__(self, "J", states, 4)
+
+class ShapeS(Shape):
+	def __init__(self):
+		states = [State([[0, 1, 1], [1, 1, 0]], (0, 1)), \
+					State([[1, 0], [1, 1], [0, 1]], (1, 0))]
+		Shape.__init__(self, "S", states, 5)
+
+class ShapeZ(Shape):
+	def __init__(self):
+		states = [State([[1, 1, 0], [0, 1, 1]], (0, 1)), \
+					State([[0, 1], [1, 1], [1, 0]], (1, 0))]
+		Shape.__init__(self, "Z", states, 6)
+
+class ShapeT(Shape):
+	def __init__(self):
+		states = [State([[1, 1, 1], [0, 1, 0]], (0, 1)), \
+					State([[0, 1], [1, 1], [0, 1]], (1, 1)), \
+					State([[0, 1, 0], [1, 1, 1]], (1, 1)), \
+					State([[1, 0], [1, 1], [1, 0]], (1, 0))]
+		Shape.__init__(self, "T", states, 7)
+
+shapes = [ShapeI, ShapeO, ShapeL, ShapeJ, ShapeS, ShapeZ, ShapeT]
 
 def main():
-	shapes = [ShapeI, ShapeO]
-	a = shapes[0]()
-
+	for shape in shapes:
+		t = shape()
 
 if __name__ == '__main__':
 	main()
