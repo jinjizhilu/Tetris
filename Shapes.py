@@ -10,7 +10,6 @@ class Shape:
 		self.n_state = len(states)
 		self.brick = brick
 		self.i_state = 0
-		self.stop = False
 		self.pos = self.states[self.i_state].center
 
 	def __add_tuple(self, tuple1, tuple2):
@@ -36,7 +35,7 @@ class Shape:
 						return False
 		return True
 
-	def __check_stop(self, grids):
+	def check_stop(self, grids):
 		state = self.states[self.i_state]
 
 		for i in range(len(state.state)):
@@ -45,7 +44,7 @@ class Shape:
 					y = self.pos[0] + i - state.center[0]
 					x = self.pos[1] + j - state.center[1]
 
-					if y == len(grids) - 1 or grids[y + 1][x] > 0:
+					if y >= len(grids) - 1 or grids[y + 1][x] > 0:
 						return True
 		return False
 
@@ -73,9 +72,11 @@ class Shape:
 					y = self.pos[0] + i - state.center[0]
 					x = self.pos[1] + j - state.center[1]
 
-					assert grids[y][x] == 0
+					if grids[y][x] > 0:
+						return False
 
 					grids[y][x] = self.brick
+		return True
 
 	def move(self, grids, shift):
 		pos_old = self.pos
@@ -83,9 +84,6 @@ class Shape:
 
 		if not self.__check_overlap(grids):
 			self.pos = pos_old
-
-		if self.__check_stop(grids):
-			self.stop = True
 
 class ShapeI(Shape):
 	def __init__(self):

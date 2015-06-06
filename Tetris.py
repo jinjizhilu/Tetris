@@ -7,7 +7,6 @@ grid_w = 10
 grid_h = 18
 margin = (30, 30)
 
-grids = [[0] * grid_w for i in range(grid_h)]
 bricks = []
 shapes = Shapes.shapes
 
@@ -18,41 +17,82 @@ def init_bricks():
 		brick = pygame.image.load('img/%s.png' % (name)).convert()
 		bricks.append(brick)
 
-def test_grids():
-	for i in range(grid_h):
-		for j in range(grid_w):
-			if random.random() > 0.25:
-				grids[i][j] = random.randint(1, 7)
-	print grids
-
 def draw_frame(screen):
 	pygame.draw.rect(screen, (200, 200, 100), Rect(margin, (grid_w * 30, grid_h * 30)), 5)
-
-def show_grids(screen):
-	screen.fill((0, 0, 0))
-
-	for i in range(grid_h):
-		for j in range(grid_w):
-			#print i, j, grids[i][j]
-			brick = bricks[grids[i][j]]
-			screen.blit(brick, (margin[0] + 30 * j, margin[1] + 30 * i))
-
-def show_next_shape(screen, shape):
-	state = shape.states[shape.i_state]
-	pos = (390 + state.center[0] * 30, 60 + state.center[1] * 30)
-	brick = bricks[shape.brick]
-
-	for i in range(len(state.state)):
-		for j in range(len(state.state[0])):
-			if state.state[i][j] == 1:
-				y = i - state.center[0]
-				x = j - state.center[1]
-
-				screen.blit(brick, (pos[0] + x * 30, pos[1] + y * 30))
 
 def get_next_shape():
 	i_next_shape = random.randrange(len(shapes))
 	return shapes[i_next_shape]()
+
+class Game:
+	def __init__(self):
+		self.init()
+
+	def init(self):
+		self.grids = [[0] * grid_w for i in range(grid_h)]
+		self.shape_now = get_next_shape()
+		self.shape_next = get_next_shape()
+		self.shape_now.init_pos((0, grid_w / 2 - 1))
+
+	def test_grids(self):
+		for i in range(grid_h):
+			for j in range(grid_w):
+				if random.random() > 0.25:
+					self.grids[i][j] = random.randint(1, 7)
+
+	def __show_shape(self, screen, shape, shift):
+		state = shape.states[shape.i_state]
+		brick = bricks[shape.brick]
+
+		for i in range(len(state.state)):
+			for j in range(len(state.state[0])):
+				if state.state[i][j] == 1:
+					y = shift[0] + i - state.center[0]
+					x = shift[1] + j - state.center[1]
+
+					screen.blit(brick, (margin[1] + x * 30, margin[0] + y * 30))
+
+	def show_grids(self, screen):
+		screen.fill((0, 0, 0))
+
+		for i in range(grid_h):
+			for j in range(grid_w):
+				#print i, j, grids[i][j]
+				brick = bricks[self.grids[i][j]]
+				screen.blit(brick, (margin[1] + 30 * j, margin[0] + 30 * i))
+
+		self.__show_shape(screen, self.shape_now, self.shape_now.pos)
+
+	def show_next_shape(self, screen):
+		self.__show_shape(screen, self.shape_next, (2, 14))
+
+	def move(self, shift):
+		self.shape_now.move(self.grids, shift)
+
+	def rotate(self):
+		self.shape_now.rotate(self.grids)
+
+	def fall(self, last_shift):
+		self.shape_now.move(self.grids, (1, 0))
+		if not self.__check_stop(last_shift):
+			self.fail()
+
+	def __check_stop(self, last_shift):
+		if self.shape_now.check_stop(self.grids):
+			self.shape_now.move(self.grids, last_shift)
+
+			if self.shape_now.check_stop(self.grids):
+				if not self.shape_now.put_shape(self.grids):
+					return False
+
+				self.shape_now.eliminate_line(self.grids)
+				self.shape_now = self.shape_next
+				self.shape_next = get_next_shape()
+				self.shape_now.init_pos((0, grid_w / 2 - 1))
+		return True
+
+	def fail():
+		pass
 
 def main():
 	pygame.init()
@@ -67,14 +107,10 @@ def main():
 	init_bricks()
 
 	font = pygame.font.SysFont("Arial", 20)
-	hello_text = font.render("Hello Tetris!", True, (200, 200, 0))
-	screen.blit(hello_text, (0, 0))
 
-	#test_grids()
-	show_grids(screen)
-	shape_now = get_next_shape()
-	shape_next = get_next_shape()
-	shape_now.init_pos((0, grid_w / 2))
+	game = Game()
+
+	last_shift = (0, 0)
 
 	while True:
 		for event in pygame.event.get():
@@ -84,36 +120,30 @@ def main():
 			if event.type == KEYDOWN:
 				key_map = {K_LEFT: (0, -1), K_RIGHT: (0, 1), K_DOWN: (1, 0)}
 				if event.key in key_map:
-					shape_now.move(grids, key_map[event.key])
+					game.move(key_map[event.key])
+					last_shift = key_map[event.key]
 
 				if event.key == K_UP:
-					shape_now.rotate(grids)
+					game.rotate()
+
+				if event.key == K_ESCAPE:
+					game.init()
 
 		clock.tick(60)
 
 		n_tick += 1
 
 		if n_tick % speed == 0:
-			shape_now.move(grids, (1, 0))
+			game.fall(last_shift)
 
-		grids_old = [grids[i][:] for i in range(len(grids))]
-		shape_now.put_shape(grids)
+		if n_tick % speed < speed / 2:
+			last_shift = (0, 0)
 
-		if shape_now.stop:
-			shape_now.eliminate_line(grids)
-			shape_now = shape_next
-			shape_next = get_next_shape()
-			shape_now.init_pos((0, grid_w / 2))
-			grids_old = grids
-
-		show_grids(screen)
-		show_next_shape(screen, shape_next)
+		game.show_grids(screen)
+		game.show_next_shape(screen)
 		draw_frame(screen)
 		
 		pygame.display.update()
-
-		global grids
-		grids = grids_old
 
 if __name__ == '__main__':
 	main()
