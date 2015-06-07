@@ -49,12 +49,16 @@ class Shape:
 		return False
 
 	def eliminate_line(self, grids):
+		n_eliminate_line = 0
 		for i in range(len(grids)):
 			holes = filter(lambda x: x == 0, grids[i])
 
 			if len(holes) == 0:
 				grids.pop(i)
 				grids.insert(0, [0] * len(grids[0]))
+				n_eliminate_line += 1
+
+		return n_eliminate_line
 
 	def rotate(self, grids):
 		i_state_old = self.i_state

@@ -1,7 +1,7 @@
-import pygame, random
+import pygame
 from pygame.locals import *
 from sys import exit
-import Shapes
+import Shapes, Game
 
 grid_w = 10
 grid_h = 18
@@ -17,98 +17,68 @@ def init_bricks():
 		brick = pygame.image.load('img/%s.png' % (name)).convert()
 		bricks.append(brick)
 
-def draw_frame(screen):
-	pygame.draw.rect(screen, (200, 200, 100), Rect(margin, (grid_w * 30, grid_h * 30)), 5)
+class Display:
+	def __init__(self, screen):
+		self.screen = screen
+		self.font = pygame.font.SysFont("Arial", 48)
 
-def get_next_shape():
-	i_next_shape = random.randrange(len(shapes))
-	return shapes[i_next_shape]()
+	def show_frame(self):
+		pygame.draw.rect(self.screen, (200, 200, 100), Rect(margin, (grid_w * 30, grid_h * 30)), 5)
+		pygame.draw.rect(self.screen, (200, 200, 100), Rect((385, 30), (200, 180)), 2)
 
-class Game:
-	def __init__(self):
-		self.init()
+	def show_level(self, level):
+		level_text = self.font.render("Level: %d" % (level), True, (200, 200, 100))
+		self.screen.blit(level_text, (485 - level_text.get_width() / 2, 240))
 
-	def init(self):
-		self.grids = [[0] * grid_w for i in range(grid_h)]
-		self.shape_now = get_next_shape()
-		self.shape_next = get_next_shape()
-		self.shape_now.init_pos((0, grid_w / 2 - 1))
+	def show_score(self, score):
+		score_text = self.font.render("Score: %d" % (score), True, (200, 200, 100))
+		self.screen.blit(score_text, (485 - score_text.get_width() / 2, 320))
 
-	def test_grids(self):
-		for i in range(grid_h):
-			for j in range(grid_w):
-				if random.random() > 0.25:
-					self.grids[i][j] = random.randint(1, 7)
-
-	def __show_shape(self, screen, shape, shift):
+	def __show_shape(self, shape, shift):
 		state = shape.states[shape.i_state]
 		brick = bricks[shape.brick]
 
 		for i in range(len(state.state)):
 			for j in range(len(state.state[0])):
 				if state.state[i][j] == 1:
-					y = shift[0] + i - state.center[0]
-					x = shift[1] + j - state.center[1]
+					y = i - state.center[0]
+					x = j - state.center[1]
 
-					screen.blit(brick, (margin[1] + x * 30, margin[0] + y * 30))
+					self.screen.blit(brick, (shift[1] + x * 30, shift[0] + y * 30))
 
-	def show_grids(self, screen):
-		screen.fill((0, 0, 0))
-
+	def show_grids(self, grids, shape_now):
 		for i in range(grid_h):
 			for j in range(grid_w):
 				#print i, j, grids[i][j]
-				brick = bricks[self.grids[i][j]]
-				screen.blit(brick, (margin[1] + 30 * j, margin[0] + 30 * i))
+				brick = bricks[grids[i][j]]
+				self.screen.blit(brick, (margin[1] + 30 * j, margin[0] + 30 * i))
 
-		self.__show_shape(screen, self.shape_now, self.shape_now.pos)
+		self.__show_shape(shape_now, (margin[0] + shape_now.pos[0] * 30, margin[1] + shape_now.pos[1] * 30))
 
-	def show_next_shape(self, screen):
-		self.__show_shape(screen, self.shape_next, (2, 14))
+	def show_next_shape(self, shape_next):
+		state = shape_next.states[shape_next.i_state]
+		center = (len(state.state) / 2.0, len(state.state[0]) / 2.0)
 
-	def move(self, shift):
-		self.shape_now.move(self.grids, shift)
+		shift = (120 - (center[0] - state.center[0]) * 30, 485 - (center[1] - state.center[1]) * 30)
+		self.__show_shape(shape_next, shift)
 
-	def rotate(self):
-		self.shape_now.rotate(self.grids)
-
-	def fall(self, last_shift):
-		self.shape_now.move(self.grids, (1, 0))
-		if not self.__check_stop(last_shift):
-			self.fail()
-
-	def __check_stop(self, last_shift):
-		if self.shape_now.check_stop(self.grids):
-			self.shape_now.move(self.grids, last_shift)
-
-			if self.shape_now.check_stop(self.grids):
-				if not self.shape_now.put_shape(self.grids):
-					return False
-
-				self.shape_now.eliminate_line(self.grids)
-				self.shape_now = self.shape_next
-				self.shape_next = get_next_shape()
-				self.shape_now.init_pos((0, grid_w / 2 - 1))
-		return True
-
-	def fail():
-		pass
+	def clear(self):
+		self.screen.fill((0, 0, 0))
 
 def main():
 	pygame.init()
 	screen = pygame.display.set_mode((640, 600), 0, 32)
 	pygame.display.set_caption("Tetris")
-	pygame.key.set_repeat(250, 75)
+	display = Display(screen)
+
+	pygame.key.set_repeat(200, 50)
 
 	clock = pygame.time.Clock()
 	n_tick = 0
-	speed = 30
 
 	init_bricks()
 
-	font = pygame.font.SysFont("Arial", 20)
-
-	game = Game()
+	game = Game.Game((grid_h, grid_w))
 
 	last_shift = (0, 0)
 
@@ -127,21 +97,30 @@ def main():
 					game.rotate()
 
 				if event.key == K_ESCAPE:
-					game.init()
+					game.pause = not game.pause
+
+				if event.key == K_SPACE:
+					game.fall_to_bottom(event.mod)
+
+				if event.key == K_m:
+					game.speed_up()
 
 		clock.tick(60)
 
 		n_tick += 1
 
-		if n_tick % speed == 0:
+		if n_tick % game.speed == 0 and not game.pause:
 			game.fall(last_shift)
 
-		if n_tick % speed < speed / 2:
+		if n_tick % game.speed < game.speed / 2:
 			last_shift = (0, 0)
 
-		game.show_grids(screen)
-		game.show_next_shape(screen)
-		draw_frame(screen)
+		display.clear()
+		display.show_frame()
+		display.show_grids(game.grids, game.shape_now)
+		display.show_next_shape(game.shape_next)
+		display.show_level(game.level)
+		display.show_score(game.score)
 		
 		pygame.display.update()
 
