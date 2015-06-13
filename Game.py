@@ -8,6 +8,7 @@ class Game:
 	def __init__(self, (grid_h, grid_w)):
 		self.grid_h = grid_h
 		self.grid_w = grid_w
+		self.sounds = {}
 		self.init()
 
 	def init(self):
@@ -21,10 +22,20 @@ class Game:
 		self.level = 1
 		self.speed = self.level_speed_p[self.level]
 
+	def init_sound(self, sound_name, sound):
+		'''sounds = {"rotate_sound": None, "move_sound": None, stop_sound": None, \
+			"eliminate_sound": None, "level_up_sound": None, "fail_sound": None}'''
+		self.sounds[sound_name] = sound
+
+	def __play_sound(self, sound_name):
+		if sound_name in self.sounds and self.sounds[sound_name] != None:
+			self.sounds[sound_name].play()
+
 	def __level_up(self):
 		if self.level <= self.level_max:
 			self.level += 1
 			self.speed = self.level_speed_p[self.level]
+			self.__play_sound("level_up_sound")
 
 	def __add_score(self, n_eliminate_line):
 		self.score += sum(range(n_eliminate_line + 1)) * 10 * self.level
@@ -50,9 +61,11 @@ class Game:
 
 	def move(self, shift):
 		self.shape_now.move(self.grids, shift)
+		self.__play_sound("move_sound")
 
 	def rotate(self):
 		self.shape_now.rotate(self.grids)
+		self.__play_sound("rotate_sound")
 
 	def fall(self, last_shift):
 		self.shape_now.move(self.grids, (1, 0))
@@ -80,15 +93,22 @@ class Game:
 				n_eliminate_line = self.shape_now.eliminate_line(self.grids)
 				self.__add_score(n_eliminate_line)
 
+				if n_eliminate_line > 0:
+					self.__play_sound("eliminate_sound")
+				else:
+					self.__play_sound("stop_sound")
+
 				self.shape_now = self.shape_next
 				self.shape_next = self.__get_next_shape()
 				self.shape_now.init_pos((0, self.grid_w / 2 - 1))
+				
 		return True
 
 	def set_next_I(self):
 		self.next_I = True
 
 	def fail(self):
+		self.__play_sound("fail_sound")
 		self.init()
 
 def main():
