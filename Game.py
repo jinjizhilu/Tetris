@@ -1,17 +1,19 @@
-import random, Shapes
+import os, time, random, Shapes
 
 class Game:
 	level_speed_p = [40, 30, 25, 20, 15, 12, 10, 8, 6, 4]
 	level_score_max = [100, 500, 1500, 3000, 5000, 8000, 12000, 18000, 30000, 99999]
 	level_max = 10
+	high_score = []
 
 	def __init__(self, (grid_h, grid_w)):
 		self.grid_h = grid_h
 		self.grid_w = grid_w
 		self.sounds = {}
-		self.init()
+		self.__init()
+		self.__init_highscore()
 
-	def init(self):
+	def __init(self):
 		self.grids = [[0] * self.grid_w for i in range(self.grid_h)]
 		self.next_I = False
 		self.shape_now = self.__get_next_shape()
@@ -21,6 +23,26 @@ class Game:
 		self.pause = False
 		self.level = 1
 		self.speed = self.level_speed_p[self.level]
+
+	def __init_highscore(self):
+		if os.path.exists('record.te'):
+			for line in open('record.te').readlines():
+				score, time, player = line[:-1].split(',')
+				self.high_score.append((int(score), time, player))
+		self.high_score = self.high_score[:8]
+
+	def __save_highscore(self):
+		f = open('record.te', 'w')
+		for score, time, player in self.high_score:
+			f.write("%s,%s,%s\n" % (score, time, player))
+		f.close()
+
+	def __update_highscore(self, score, player):
+		score_time = time.strftime("%Y-%m-%d")
+		self.high_score.append((score, score_time, player))
+		self.high_score.sort(reverse = True)
+		self.high_score = self.high_score[:8]
+		self.__save_highscore()
 
 	def init_sound(self, sound_name, sound):
 		'''sounds = {"rotate_sound": None, "move_sound": None, stop_sound": None, \
@@ -108,8 +130,9 @@ class Game:
 		self.next_I = True
 
 	def fail(self):
+		self.__update_highscore(self.score, "default")
 		self.__play_sound("fail_sound")
-		self.init()
+		self.__init()
 
 def main():
 	game = Game((1, 1))

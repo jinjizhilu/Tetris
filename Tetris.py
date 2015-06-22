@@ -35,6 +35,21 @@ class Display:
 		score_text = self.font.render("Score: %d" % (score), True, self.font_color)
 		self.screen.blit(score_text, (485 - score_text.get_width() / 2, 320))
 
+	def show_high_score(self, high_score):
+		self.clear()
+
+		title = pygame.font.SysFont("Calibri bold", 72).render("High Score", True, self.font_color)
+		self.screen.blit(title, (320 - title.get_width() / 2, 40))
+		
+		head_line = self.font.render("        Score            Data         Player", True, self.font_color)
+		self.screen.blit(head_line, (320 - head_line.get_width() / 2, 110))
+
+		i = 0
+		for score, time, player in high_score:
+			score_text = self.font.render("%d   %08d   %s   %s" % (i + 1, score, time, player), True, self.font_color)
+			self.screen.blit(score_text, (320 - score_text.get_width() / 2, 160 + i * 45))
+			i += 1
+
 	def show_pause(self):
 		shadow = pygame.Surface((640, 600)).convert_alpha()
 		shadow.fill((100, 100, 100, 150))
@@ -108,6 +123,7 @@ def main():
 	last_shift = (0, 0)
 
 	while True:
+		pause = False
 		for event in pygame.event.get():
 			if event.type == QUIT:
 				exit()
@@ -122,7 +138,7 @@ def main():
 					game.rotate()
 
 				if event.key == K_ESCAPE:
-					game.pause = not game.pause
+					pause = True
 
 				if event.key == K_SPACE:
 					game.fall_to_bottom(event.mod)
@@ -148,10 +164,14 @@ def main():
 		display.show_level(game.level)
 		display.show_score(game.score)
 
-		if game.pause:
-			display.show_pause()
-		
-		pygame.display.update()
+		if pause:
+			game.pause = not game.pause
+			display.show_high_score(game.high_score)
+			#display.show_pause()
+			pygame.display.update()
+
+		if not game.pause:
+			pygame.display.update()
 
 if __name__ == '__main__':
 	main()
