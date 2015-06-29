@@ -70,17 +70,30 @@ class Display:
 
 					self.screen.blit(brick, (shift[1] + x * 30, shift[0] + y * 30))
 
-	def show_pos_hint(self, shape_now):
+	def show_pos_hint(self, grids, shape_now):
 		state = shape_now.states[shape_now.i_state]
 		hint_color = (20, 20, 50)
+		bottom_pos = []
+		hint_height = len(grids)
 
 		for i in range(len(state.state[0])):
-			for j in range(len(state.state)):
+			for j in range(len(state.state))[::-1]:
 				if state.state[j][i] == 1:
-					x = (shape_now.pos[1] - state.center[1] + i) * 30 + 30
-					y = (shape_now.pos[0] - state.center[0] + j) * 30 + 30
-					pygame.draw.rect(self.screen, hint_color, Rect((x, y), (30, 570 - y)))
+					i = shape_now.pos[1] - state.center[1] + i
+					j = shape_now.pos[0] - state.center[0] + j + 1
+					bottom_pos.append(j)
+					hint_height = min(hint_height, len(grids) - j)
+
+					for k in range(j, len(grids)):
+						if (grids[k][i] > 0):
+							hint_height = min(hint_height, k - j)
+							break
 					break
+
+		for i in range(len(state.state[0])):
+			x = (shape_now.pos[1] - state.center[1] + i) * 30 + 30
+			y = bottom_pos[i] * 30 + 30
+			pygame.draw.rect(self.screen, hint_color, Rect((x, y), (30, hint_height * 30)))
 
 	def show_grids(self, grids, shape_now):
 		for i in range(grid_h):
@@ -156,14 +169,6 @@ def main():
 		if n_tick % game.speed < game.speed / 2:
 			last_shift = (0, 0)
 
-		display.clear()
-		display.show_pos_hint(game.shape_now)
-		display.show_frame()
-		display.show_grids(game.grids, game.shape_now)
-		display.show_next_shape(game.shape_next)
-		display.show_level(game.level)
-		display.show_score(game.score)
-
 		if pause:
 			game.pause = not game.pause
 			display.show_high_score(game.high_score)
@@ -171,6 +176,13 @@ def main():
 			pygame.display.update()
 
 		if not game.pause:
+			display.clear()
+			display.show_pos_hint(game.grids, game.shape_now)
+			display.show_frame()
+			display.show_grids(game.grids, game.shape_now)
+			display.show_next_shape(game.shape_next)
+			display.show_level(game.level)
+			display.show_score(game.score)
 			pygame.display.update()
 
 if __name__ == '__main__':
