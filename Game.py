@@ -1,4 +1,4 @@
-import os, time, random, Shapes
+import os, time, random, Shape
 
 class Game:
 	level_speed_p = [40, 30, 25, 20, 15, 12, 10, 8, 6, 4]
@@ -20,7 +20,6 @@ class Game:
 		self.shape_next = self.__get_next_shape()
 		self.shape_now.init_pos((0, self.grid_w / 2 - 1))
 		self.score = 0
-		self.pause = False
 		self.level = 1
 		self.speed = self.level_speed_p[self.level]
 
@@ -72,7 +71,7 @@ class Game:
 					self.grids[i][j] = random.randint(1, 7)
 
 	def __get_next_shape(self):
-		shapes = Shapes.shapes
+		shapes = Shape.shapes
 
 		if self.next_I and random.randrange(2) == 0:
 			self.next_I = False
