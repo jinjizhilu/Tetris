@@ -1,6 +1,6 @@
-import pygame
+import pygame, sys
 from pygame.locals import *
-import Game
+import Game, Menu
 
 class Scene:
 	display_flag = True
@@ -13,7 +13,7 @@ class Scene:
 		if self.tick_handler(n_tick):
 			self.display_flag = True
 
-	def show(self):
+	def paint(self):
 		if self.display_flag:
 			self.display_handler()
 			self.display_flag = False
@@ -95,5 +95,93 @@ class PauseScene(Scene):
 		self.display.show_pause()
 		pygame.display.update()
 
-Scenes = {"": Scene(), "Game": GameScene(), "Pause": PauseScene()}
+class HighscoreScene(Scene):
+	def event_handler(self, event):
+		change = False
+
+		if event.type == KEYDOWN:
+			global cur_scene
+			cur_scene = "Pause"
+			change = True
+
+		return change
+
+	def display_handler(self):
+		self.display.show_high_score(self.game.high_score)
+		pygame.display.update()
+
+	def event_handler(self, event):
+		change = False
+
+		if event.type == KEYDOWN:
+			global cur_scene
+			cur_scene = "Game"
+			change = True
+
+		return change
+
+class PauseScene2(Scene):
+	def __init__(self):
+		self.menu = Menu.Menu((400, 400), (120, 100), 60, (200, 200, 0))
+
+		def resume_func():
+			global cur_scene
+			print "resume game"
+			cur_scene = "Game"
+
+		def restart_func():
+			global cur_scene
+			print "restart"
+			cur_scene = "Game"
+			self.game.restart()
+
+		def highscore_func():
+			global cur_scene
+			print "high score"
+			cur_scene = "Highscore"
+
+		def option_func():
+			print "option"
+
+		def exit_func():
+			print "exit"
+			sys.exit()
+
+		self.menu.add_item("Resume", resume_func)
+		self.menu.add_item("Restart", restart_func)
+		self.menu.add_item("Highscore", highscore_func)
+		self.menu.add_item("Option", option_func)
+		self.menu.add_item("Exit", exit_func)
+		self.menu.set_border(5, (200, 200, 100))
+
+	def event_handler(self, event):
+		change = False
+
+		if event.type == KEYDOWN:
+			if event.key == K_UP:
+				self.menu.select_prev()
+
+			if event.key == K_DOWN:
+				self.menu.select_next()
+
+			if event.key == K_RETURN:
+				self.menu.trigger()
+
+			change = True
+
+		if event.type == MOUSEMOTION and event.buttons == (0, 0, 0):
+			self.menu.mouse_move(event.pos)
+			change = True
+
+		if event.type == MOUSEBUTTONDOWN and event.button == 1:
+			change = True
+
+		return change
+
+	def display_handler(self):
+		self.menu.paint(self.display.screen)
+		pygame.display.update()
+
+
+Scenes = {"": Scene(), "Game": GameScene(), "Pause": PauseScene2(), "Highscore": HighscoreScene()}
 cur_scene = ""

@@ -128,6 +128,9 @@ class Game:
 	def set_next_I(self):
 		self.next_I = True
 
+	def restart(self):
+		self.__init()
+
 	def fail(self):
 		self.__update_highscore(self.score, "default")
 		self.__play_sound("fail_sound")

@@ -53,7 +53,7 @@ def main():
 
 		Scenes[Scene.cur_scene].tick(n_tick)
 
-		Scenes[Scene.cur_scene].show()
+		Scenes[Scene.cur_scene].paint()
 
 if __name__ == '__main__':
 	main()
