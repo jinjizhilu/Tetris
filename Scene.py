@@ -1,6 +1,6 @@
 import pygame, sys
 from pygame.locals import *
-import Game, Menu
+import Game, Menu, Inputbox
 
 class Scene:
 	display_flag = True
@@ -80,28 +80,13 @@ class GameScene(Scene):
 		self.display.show_score(self.game.score)
 		pygame.display.update()
 
-class PauseScene(Scene):
-	def event_handler(self, event):
-		change = False
-
-		if event.type == KEYDOWN:
-			global cur_scene
-			cur_scene = "Game"
-			change = True
-
-		return change
-
-	def display_handler(self):
-		self.display.show_pause()
-		pygame.display.update()
-
 class HighscoreScene(Scene):
 	def event_handler(self, event):
 		change = False
 
-		if event.type == KEYDOWN:
+		if event.type == KEYDOWN and event.key == K_ESCAPE:
 			global cur_scene
-			cur_scene = "Pause"
+			cur_scene = "Game"
 			change = True
 
 		return change
@@ -110,19 +95,35 @@ class HighscoreScene(Scene):
 		self.display.show_high_score(self.game.high_score)
 		pygame.display.update()
 
+class NameInputScene(Scene):
+	def __init__(self):
+		self.inputbox = Inputbox.Inputbox("Please enter your name:", (500, 100), (50, 250), 40, (200, 200, 0))
+		self.inputbox.set_border(5, (200, 200, 100))
+		self.inputbox.set_input_limit(15)
+
 	def event_handler(self, event):
 		change = False
 
 		if event.type == KEYDOWN:
-			global cur_scene
-			cur_scene = "Game"
+			if event.key == K_ESCAPE:
+				pass
+
+			if event.key == K_RETURN:
+				pass
+
+			self.inputbox.key_down(event.key)
 			change = True
 
 		return change
 
-class PauseScene2(Scene):
+	def display_handler(self):
+		self.inputbox.paint(self.display.screen)
+		pygame.display.update()
+
+class PauseScene(Scene):
 	def __init__(self):
-		self.menu = Menu.Menu((400, 400), (120, 100), 60, (200, 200, 0))
+		self.menu = Menu.Menu((300, 400), (150, 100), 60, (200, 200, 0))
+		self.menu.set_border(5, (200, 200, 100))
 
 		def resume_func():
 			global cur_scene
@@ -141,7 +142,9 @@ class PauseScene2(Scene):
 			cur_scene = "Highscore"
 
 		def option_func():
+			global cur_scene
 			print "option"
+			cur_scene = "NameInput"
 
 		def exit_func():
 			print "exit"
@@ -152,7 +155,6 @@ class PauseScene2(Scene):
 		self.menu.add_item("Highscore", highscore_func)
 		self.menu.add_item("Option", option_func)
 		self.menu.add_item("Exit", exit_func)
-		self.menu.set_border(5, (200, 200, 100))
 
 	def event_handler(self, event):
 		change = False
@@ -174,6 +176,7 @@ class PauseScene2(Scene):
 			change = True
 
 		if event.type == MOUSEBUTTONDOWN and event.button == 1:
+			self.menu.mouse_down()
 			change = True
 
 		return change
@@ -183,5 +186,5 @@ class PauseScene2(Scene):
 		pygame.display.update()
 
 
-Scenes = {"": Scene(), "Game": GameScene(), "Pause": PauseScene2(), "Highscore": HighscoreScene()}
+Scenes = {"": Scene(), "Game": GameScene(), "Pause": PauseScene(), "Highscore": HighscoreScene(), "NameInput": NameInputScene(),}
 cur_scene = ""
