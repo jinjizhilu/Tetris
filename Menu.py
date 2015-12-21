@@ -57,7 +57,9 @@ class Menu:
 			if button.mouse_move((x, y)):
 				self.focus = i
 
-	def mouse_down(self):
+	def mouse_down(self, pos):
+		self.mouse_move(pos)
+		
 		for button in self.buttons:
 			button.mouse_down()
 

@@ -16,7 +16,7 @@ class Inputbox:
 		self.background_color = (0, 0, 0)
 		self.hint_text = hint
 		self.input_text= ""
-		self.input_limit = -1
+		self.input_limit = 100
 		self.font = pygame.font.SysFont("Calibri bold", font_size)
 
 	def set_border(self, width, color):

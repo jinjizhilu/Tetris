@@ -34,9 +34,17 @@ class Display:
 		self.screen.blit(head_line, (320 - head_line.get_width() / 2, 110))
 
 		i = 0
-		for score, time, player in high_score:
-			score_text = self.font.render("%d   %08d   %s   %s" % (i + 1, score, time, player), True, self.font_color)
-			self.screen.blit(score_text, (320 - score_text.get_width() / 2, 160 + i * 45))
+		for score, date, player in high_score:
+			order_text = self.font.render("%d" % (i + 1), True, self.font_color)
+			score_text = self.font.render("%08d" % (score), True, self.font_color)
+			date_text = self.font.render("%s" % (date), True, self.font_color)
+			player_text = self.font.render("%s" % (player), True, self.font_color)
+
+			self.screen.blit(order_text, (45, 160 + i * 45))
+			self.screen.blit(score_text, (95, 160 + i * 45))
+			self.screen.blit(date_text, (280, 160 + i * 45))
+			self.screen.blit(player_text, (475, 160 + i * 45))
+
 			i += 1
 
 	def show_pause(self):
@@ -100,6 +108,16 @@ class Display:
 
 		shift = (120 - (center[0] - state.center[0]) * 30, 485 - (center[1] - state.center[1]) * 30)
 		self.__show_shape(shape_next, shift)
+
+	def show_cover(self):
+		pygame.draw.rect(self.screen, (200, 200, 100), Rect((40, 30), (560, 280)), 5)
+		pygame.draw.rect(self.screen, (0, 0, 0), Rect((200, 250), (240, 50)), 0)
+
+		title = pygame.font.SysFont("Calibri bold", 200).render("TetriS", True, self.font_color)
+		author = pygame.font.SysFont("Calibri", 36).render("by solarlu", True, self.font_color)
+
+		self.screen.blit(title, (120, 80))
+		self.screen.blit(author, (250, 220))
 
 	def clear(self):
 		self.screen.fill((0, 0, 0))

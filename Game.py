@@ -22,6 +22,7 @@ class Game:
 		self.score = 0
 		self.level = 1
 		self.speed = self.level_speed_p[self.level]
+		self.state = "normal"
 
 	def __init_highscore(self):
 		if os.path.exists('record.te'):
@@ -91,17 +92,17 @@ class Game:
 	def fall(self, last_shift):
 		self.shape_now.move(self.grids, (1, 0))
 		if not self.__check_stop(last_shift):
-			self.fail()
+			self.__fail()
 
 	def fall_to_bottom(self, mode):
 		if mode == 1:
-			self.set_next_I()
+			self.__set_next_I()
 
 		while not self.shape_now.check_stop(self.grids):
 			self.shape_now.move(self.grids, (1, 0))
 
 		if not self.__check_stop((0, 0)):
-			self.fail()
+			self.__fail()
 
 	def __check_stop(self, last_shift):
 		if self.shape_now.check_stop(self.grids):
@@ -125,16 +126,21 @@ class Game:
 				
 		return True
 
-	def set_next_I(self):
+	def __set_next_I(self):
 		self.next_I = True
+
+	def set_highscore(self, player):
+		self.__update_highscore(self.score, player)
 
 	def restart(self):
 		self.__init()
 
-	def fail(self):
-		self.__update_highscore(self.score, "default")
+	def __fail(self):
 		self.__play_sound("fail_sound")
-		self.__init()
+		self.state = "fail"
+
+	def is_fail(self):
+		return self.state == "fail"
 
 def main():
 	game = Game((1, 1))

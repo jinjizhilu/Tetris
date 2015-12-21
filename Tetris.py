@@ -37,7 +37,7 @@ def main():
 	game.init_sound("eliminate_sound", sound)
 	Scene.Scene.game = game
 
-	Scene.cur_scene = "Game"
+	Scene.cur_scene = "Cover"
 	Scenes["Game"].init()
 
 	while True:

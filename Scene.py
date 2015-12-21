@@ -31,6 +31,11 @@ class GameScene(Scene):
 	def init(self):
 		self.last_shift = (0, 0)
 
+	def __check_fail(self):
+		if self.game.is_fail():
+			global cur_scene
+			cur_scene = "NameInput"
+
 	def event_handler(self, event):
 		change = False
 
@@ -54,6 +59,8 @@ class GameScene(Scene):
 			if event.key == K_m:
 				self.game._Game__level_up()
 
+			self.__check_fail()
+
 			change = True
 
 		return change
@@ -63,6 +70,7 @@ class GameScene(Scene):
 
 		if n_tick % self.game.speed == 0:
 			self.game.fall(self.last_shift)
+			self.__check_fail()
 			change = True
 
 		if n_tick % self.game.speed < self.game.speed / 2:
@@ -81,12 +89,15 @@ class GameScene(Scene):
 		pygame.display.update()
 
 class HighscoreScene(Scene):
+	def __init__(self):
+		self.return_scene = "Game"
+
 	def event_handler(self, event):
 		change = False
 
 		if event.type == KEYDOWN and event.key == K_ESCAPE:
 			global cur_scene
-			cur_scene = "Game"
+			cur_scene = self.return_scene
 			change = True
 
 		return change
@@ -99,17 +110,25 @@ class NameInputScene(Scene):
 	def __init__(self):
 		self.inputbox = Inputbox.Inputbox("Please enter your name:", (500, 100), (50, 250), 40, (200, 200, 0))
 		self.inputbox.set_border(5, (200, 200, 100))
-		self.inputbox.set_input_limit(15)
+		self.inputbox.set_input_limit(10)
+		self.name = ""
+
+	def __finish_input(self, name):
+		global cur_scene
+		self.game.set_highscore(name)
+		self.game.restart()
+		cur_scene = "Highscore"
+		Scenes["Highscore"].return_scene = "Game"
 
 	def event_handler(self, event):
 		change = False
 
 		if event.type == KEYDOWN:
 			if event.key == K_ESCAPE:
-				pass
+				self.__finish_input("Anonymous")
 
 			if event.key == K_RETURN:
-				pass
+				self.__finish_input(self.inputbox.get_input_text())
 
 			self.inputbox.key_down(event.key)
 			change = True
@@ -144,16 +163,72 @@ class PauseScene(Scene):
 		def option_func():
 			global cur_scene
 			print "option"
-			cur_scene = "NameInput"
 
-		def exit_func():
-			print "exit"
-			sys.exit()
+		def back_func():
+			global cur_scene
+			print "back"
+			cur_scene = "Cover"
 
 		self.menu.add_item("Resume", resume_func)
 		self.menu.add_item("Restart", restart_func)
 		self.menu.add_item("Highscore", highscore_func)
 		self.menu.add_item("Option", option_func)
+		self.menu.add_item("Back", back_func)
+
+	def event_handler(self, event):
+		change = False
+
+		if event.type == KEYDOWN:
+			if event.key == K_UP:
+				self.menu.select_prev()
+
+			if event.key == K_DOWN:
+				self.menu.select_next()
+
+			if event.key == K_RETURN:
+				self.menu.trigger()
+
+			change = True
+
+		if event.type == MOUSEMOTION and event.buttons == (0, 0, 0):
+			self.menu.mouse_move(event.pos)
+			change = True
+
+		if event.type == MOUSEBUTTONDOWN and event.button == 1:
+			self.menu.mouse_down(event.pos)
+			change = True
+
+		return change
+
+	def display_handler(self):
+		self.menu.paint(self.display.screen)
+		pygame.display.update()
+
+class CoverScene(Scene):
+	def __init__(self):
+		self.menu = Menu.Menu((240, 260), (200, 300), 60, (200, 200, 0))
+
+		def start_func():
+			global cur_scene
+			print "start game"
+			cur_scene = "Game"
+
+		def highscore_func():
+			global cur_scene
+			print "high score"
+			cur_scene = "Highscore"
+			Scenes["Highscore"].return_scene = "Cover"
+
+		def about_func():
+			print "about"
+
+		def exit_func():
+			print "exit"
+			sys.exit()
+
+		self.menu.add_item("Start", start_func)
+		self.menu.add_item("Highscore", highscore_func)
+		self.menu.add_item("About", about_func)
 		self.menu.add_item("Exit", exit_func)
 
 	def event_handler(self, event):
@@ -176,15 +251,17 @@ class PauseScene(Scene):
 			change = True
 
 		if event.type == MOUSEBUTTONDOWN and event.button == 1:
-			self.menu.mouse_down()
+			self.menu.mouse_down(event.pos)
 			change = True
 
 		return change
 
 	def display_handler(self):
+		self.display.clear()
+		self.display.show_cover()
 		self.menu.paint(self.display.screen)
 		pygame.display.update()
 
-
-Scenes = {"": Scene(), "Game": GameScene(), "Pause": PauseScene(), "Highscore": HighscoreScene(), "NameInput": NameInputScene(),}
+Scenes = {"": Scene(), "Game": GameScene(), "Pause": PauseScene(), "Highscore": HighscoreScene(), \
+	"NameInput": NameInputScene(), "Cover": CoverScene(),}
 cur_scene = ""
