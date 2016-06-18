@@ -12,12 +12,20 @@ class Shape:
 		self.i_state = 0
 		self.pos = self.states[self.i_state].center
 
+	def copy(self):
+		shape_tmp = Shape(self.type, self.states, self.brick)
+		shape_tmp.i_state = self.i_state
+		shape_tmp.pos = self.pos
+
+		return shape_tmp
+
 	def __add_tuple(self, tuple1, tuple2):
 		return (tuple1[0] + tuple2[0], tuple1[1] + tuple2[1])
 
 	def init_pos(self, pos):
 		self.pos = self.__add_tuple(pos, self.states[self.i_state].center)
 
+	# if not overlap, return true
 	def __check_overlap(self, grids):
 		state = self.states[self.i_state]
 
@@ -66,6 +74,9 @@ class Shape:
 		
 		if not self.__check_overlap(grids):
 			self.i_state = i_state_old
+			return False
+
+		return True
 
 	def put_shape(self, grids):
 		state = self.states[self.i_state]
@@ -82,12 +93,17 @@ class Shape:
 					grids[y][x] = self.brick
 		return True
 
+	# if move succeeds, return true
 	def move(self, grids, shift):
 		pos_old = self.pos
 		self.pos = self.__add_tuple(self.pos, shift)
 
 		if not self.__check_overlap(grids):
+			#print self.pos, grids
 			self.pos = pos_old
+			return False
+
+		return True
 
 class ShapeI(Shape):
 	def __init__(self):

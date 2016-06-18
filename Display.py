@@ -30,7 +30,7 @@ class Display:
 		title = pygame.font.SysFont("Calibri bold", 72).render("High Score", True, self.font_color)
 		self.screen.blit(title, (320 - title.get_width() / 2, 40))
 		
-		head_line = self.font.render("        Score            Data         Player", True, self.font_color)
+		head_line = self.font.render("        Score            Date         Player", True, self.font_color)
 		self.screen.blit(head_line, (320 - head_line.get_width() / 2, 110))
 
 		i = 0

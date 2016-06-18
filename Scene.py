@@ -1,6 +1,6 @@
-import pygame, sys
+import pygame, sys, time
 from pygame.locals import *
-import Game, Menu, Inputbox
+import Game, Menu, Inputbox, AI
 
 class Scene:
 	display_flag = True
@@ -30,11 +30,21 @@ class Scene:
 class GameScene(Scene):
 	def init(self):
 		self.last_shift = (0, 0)
+		self.AI_mode = False
+		self.AI = AI.MedianAI()
+		self.AI_tick = 1
+		self.AI_think = 0
+		self.AI_command = []
 
 	def __check_fail(self):
 		if self.game.is_fail():
-			global cur_scene
-			cur_scene = "NameInput"
+			self.init()
+
+			if self.game.is_highscore():
+				global cur_scene
+				cur_scene = "NameInput"
+			else:
+				self.game.restart()
 
 	def event_handler(self, event):
 		change = False
@@ -42,28 +52,82 @@ class GameScene(Scene):
 		if event.type == KEYDOWN:
 			key_map = {K_LEFT: (0, -1), K_RIGHT: (0, 1), K_DOWN: (1, 0)}
 
-			if event.key in key_map:
-				self.game.move(key_map[event.key])
-				last_shift = key_map[event.key]
+			if not self.AI_mode:
+				if event.key in key_map:
+					self.game.move(key_map[event.key])
+					self.last_shift = key_map[event.key]
 
-			if event.key == K_UP:
-				self.game.rotate()
+				if event.key == K_UP:
+					self.game.rotate()
+
+				if event.key == K_SPACE:
+					#self.game.rotate()
+					self.game.fall_to_bottom(event.mod)
+
+				if event.key == K_RETURN:
+					self.game.fall_to_bottom(event.mod)
 
 			if event.key == K_ESCAPE:
 				global cur_scene
 				cur_scene = "Pause";
 
-			if event.key == K_SPACE:
-				self.game.fall_to_bottom(event.mod)
-
 			if event.key == K_m:
 				self.game._Game__level_up()
+
+			if event.key == K_a:
+				self.AI_mode = not self.AI_mode
+
+			if event.key == K_n:
+				action = self.AI.go(self.game.grids, self.game.shape_now)
+
+				for i in range(action.rotate):
+					self.game.rotate()
+
+				for i in range(abs(action.shift)):
+					if action.shift > 0:
+						self.game.move((0, 1))
+					else:
+						self.game.move((0, -1))
+
+				self.game.fall_to_bottom()
 
 			self.__check_fail()
 
 			change = True
 
 		return change
+
+	def __fill_AI_command(self):
+		action = self.AI.go(self.game.grids, [self.game.shape_now, self.game.shape_next])
+		print self.game.shape_now.type, action.rotate, action.shift
+
+		self.AI_command.append((1, 0))
+
+		for i in range(action.rotate):
+			self.AI_command.append((-1, 0))
+
+		for i in range(abs(action.shift)):
+			if action.shift > 0:
+				self.AI_command.append((0, 1))
+			else:
+				self.AI_command.append((0, -1))
+
+		self.AI_command.append((2, 0))
+
+	def __execute_AI_command(self, command):
+		if command[0] < 0:
+			self.game.rotate()
+
+		if command[0] == 0:
+			self.game.move(command)
+
+		if command[0] == 1:
+			self.game.fall((0, 0))
+
+		if command[0] == 2:
+			self.game.fall_to_bottom()
+
+		change = True
 
 	def tick_handler(self, n_tick):
 		change = False
@@ -75,6 +139,16 @@ class GameScene(Scene):
 
 		if n_tick % self.game.speed < self.game.speed / 2:
 			self.last_shift = (0, 0)
+
+		if self.AI_mode and n_tick % self.AI_tick == 0:
+			if len(self.AI_command) == 0:
+				time.sleep(self.AI_think / 1000.0)
+				self.__fill_AI_command()
+
+			next_command = self.AI_command.pop(0)
+			self.__execute_AI_command(next_command)
+
+			change = True
 
 		return change
 

@@ -1,7 +1,9 @@
 import os, time, random, Shape
 
+random.seed(1)
+
 class Game:
-	level_speed_p = [40, 30, 25, 20, 15, 12, 10, 8, 6, 4]
+	level_speed_p = [40, 30, 25, 20, 15, 12, 10, 8, 6, 4, 3]
 	level_score_max = [100, 500, 1500, 3000, 5000, 8000, 12000, 18000, 30000, 99999]
 	level_max = 10
 	high_score = []
@@ -54,7 +56,7 @@ class Game:
 			self.sounds[sound_name].play()
 
 	def __level_up(self):
-		if self.level <= self.level_max:
+		if self.level < self.level_max:
 			self.level += 1
 			self.speed = self.level_speed_p[self.level]
 			self.__play_sound("level_up_sound")
@@ -94,7 +96,7 @@ class Game:
 		if not self.__check_stop(last_shift):
 			self.__fail()
 
-	def fall_to_bottom(self, mode):
+	def fall_to_bottom(self, mode = 0):
 		if mode == 1:
 			self.__set_next_I()
 
@@ -128,6 +130,9 @@ class Game:
 
 	def __set_next_I(self):
 		self.next_I = True
+
+	def is_highscore(self):
+		return self.score > self.high_score[-1]
 
 	def set_highscore(self, player):
 		self.__update_highscore(self.score, player)
